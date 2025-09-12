@@ -52,13 +52,19 @@ import {
 export default function Services() {
   const queryClient = useQueryClient()
 
+  // ✅ All queries now hit /admin/api/services
   const { data: services, isLoading } = useQuery<Service[]>({
-    queryKey: ["/api/services"],
+    queryKey: ["/admin/api/services"],
+    queryFn: async () => {
+      const res = await fetch("/admin/api/services")
+      if (!res.ok) throw new Error("Failed to fetch services")
+      return res.json()
+    }
   });
 
   const createMutation = useMutation({
     mutationFn: async (newService: Partial<Service>) => {
-      const res = await fetch("/api/services", {
+      const res = await fetch("/admin/api/services", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newService),
@@ -66,12 +72,12 @@ export default function Services() {
       if (!res.ok) throw new Error("Failed to create service")
       return res.json()
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/services"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/admin/api/services"] }),
   })
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: number, updates: Partial<Service> }) => {
-      const res = await fetch(`/api/services/${id}`, {
+    mutationFn: async ({ id, updates }: { id: string, updates: Partial<Service> }) => {
+      const res = await fetch(`/admin/api/services/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
@@ -79,16 +85,16 @@ export default function Services() {
       if (!res.ok) throw new Error("Failed to update service")
       return res.json()
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/services"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/admin/api/services"] }),
   })
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const res = await fetch(`/api/services/${id}`, { method: "DELETE" })
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/admin/api/services/${id}`, { method: "DELETE" })
       if (!res.ok) throw new Error("Failed to delete service")
       return id
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/services"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/admin/api/services"] }),
   })
 
   const [newService, setNewService] = useState({ name: "", price: "", duration: "" })

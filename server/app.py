@@ -42,6 +42,7 @@ app.config["JWT_SECRET_KEY"] = "super-jwt-secret-loki"
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
 
+
 # ---------------- HELPERS ---------------- #
 def admin_login_required(f):
     @wraps(f)
@@ -49,7 +50,9 @@ def admin_login_required(f):
         if not session.get("admin_logged_in"):
             return jsonify({"error": "Unauthorized"}), 401
         return f(*args, **kwargs)
+
     return wrapper
+
 
 # ---------------- MODELS ---------------- #
 class Service(db.Model):
@@ -69,6 +72,7 @@ class Service(db.Model):
             "status": self.status,
             "usage_count": self.usage_count,
         }
+
 
 class Customer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -92,6 +96,7 @@ class Customer(db.Model):
             "phone": self.phone,
             "createdAt": self.created_at.isoformat(),
         }
+
 
 class Order(db.Model):
     id = db.Column(db.String(20), primary_key=True, default=lambda: str(uuid.uuid4())[:8])
@@ -117,9 +122,11 @@ class Order(db.Model):
             "createdAt": self.created_at.isoformat(),
         }
 
+
 # ---------------- ADMIN AUTH ---------------- #
 ADMIN_USER = "hahaboi"
 ADMIN_PASS = "somethingsomething"
+
 
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
@@ -139,11 +146,13 @@ def admin_login():
             return render_template("lokesh.html", error="Invalid credentials")
     return render_template("lokesh.html")
 
+
 @app.route("/admin/logout", methods=["POST"])
 @admin_login_required
 def admin_logout():
     session.pop("admin_logged_in", None)
     return jsonify({"message": "Admin logged out"}), 200
+
 
 # ---------------- CUSTOMER AUTH (JWT) ---------------- #
 @app.route("/auth/signup", methods=["POST"])
@@ -161,6 +170,7 @@ def customer_signup():
     token = create_access_token(identity=customer.id)
     return jsonify({"token": token, "customer": customer.to_dict()}), 201
 
+
 @app.route("/auth/login", methods=["POST"])
 def customer_login():
     data = request.json or {}
@@ -174,13 +184,22 @@ def customer_login():
     token = create_access_token(identity=customer.id)
     return jsonify({"token": token, "customer": customer.to_dict()}), 200
 
+
 # ---------------- PUBLIC ROUTES ---------------- #
 @app.route("/api/services", methods=["GET"])
 def get_services():
     services = Service.query.all()
     return jsonify([s.to_dict() for s in services]), 200
 
+
 # ---------------- ADMIN CRUD ---------------- #
+@app.route("/admin/api/services", methods=["GET"])
+@admin_login_required
+def admin_get_services():
+    services = Service.query.all()
+    return jsonify([s.to_dict() for s in services]), 200
+
+
 @app.route("/admin/api/services", methods=["POST"])
 @admin_login_required
 def create_service():
@@ -191,6 +210,7 @@ def create_service():
     db.session.add(service)
     db.session.commit()
     return jsonify(service.to_dict()), 201
+
 
 @app.route("/admin/api/services/<service_id>", methods=["PUT"])
 @admin_login_required
@@ -205,6 +225,7 @@ def update_service(service_id):
     db.session.commit()
     return jsonify(service.to_dict()), 200
 
+
 @app.route("/admin/api/services/<service_id>", methods=["DELETE"])
 @admin_login_required
 def delete_service(service_id):
@@ -213,10 +234,12 @@ def delete_service(service_id):
     db.session.commit()
     return jsonify({"message": "Deleted"}), 200
 
+
 @app.route("/admin/api/customers", methods=["GET"])
 @admin_login_required
 def get_customers():
     return jsonify([c.to_dict() for c in Customer.query.all()])
+
 
 @app.route("/admin/api/customers", methods=["POST"])
 @admin_login_required
@@ -228,7 +251,7 @@ def create_customer():
     if Customer.query.filter_by(email=data["email"]).first():
         return jsonify({"error": "Email exists"}), 400
     customer = Customer(name=data["name"], email=data["email"], phone=data["phone"])
-    customer.set_password("defaultpass")  # you can set a default password or generate one
+    customer.set_password("defaultpass")
     db.session.add(customer)
     db.session.commit()
     return jsonify(customer.to_dict()), 201
@@ -239,8 +262,8 @@ def create_customer():
 def get_orders():
     return jsonify([o.to_dict() for o in Order.query.all()])
 
+
 # ---------------- CUSTOMER ORDERS ---------------- #
-# ---------------- CUSTOMER ORDERS (NO JWT) ---------------- #
 @app.route("/api/orders", methods=["POST"])
 def create_order_no_jwt():
     data = request.json or {}
@@ -268,12 +291,14 @@ def create_order_no_jwt():
     db.session.commit()
     return jsonify(order.to_dict()), 201
 
+
 @app.route("/api/orders", methods=["GET"])
 @jwt_required()
 def get_my_orders():
     customer = Customer.query.get_or_404(get_jwt_identity())
     orders = Order.query.filter_by(customer_name=customer.name, customer_phone=customer.phone).all()
     return jsonify([o.to_dict() for o in orders])
+
 
 @app.route("/api/orders/<order_id>", methods=["PUT"])
 @jwt_required()
@@ -299,6 +324,7 @@ def update_order(order_id):
     db.session.commit()
     return jsonify(order.to_dict())
 
+
 @app.route("/api/orders/<order_id>", methods=["DELETE"])
 @jwt_required()
 def delete_order(order_id):
@@ -310,6 +336,7 @@ def delete_order(order_id):
     db.session.commit()
     return jsonify({"message": "Deleted"}), 200
 
+
 # ---------------- ADMIN REACT ROUTING ---------------- #
 @app.route("/admin", defaults={"path": ""})
 @app.route("/admin/<path:path>")
@@ -320,6 +347,7 @@ def serve_admin(path):
     if path and os.path.exists(file_path):
         return send_from_directory(app.static_folder, path)
     return send_from_directory(app.static_folder, "index.html")
+
 
 # ---------------- INIT DB ---------------- #
 def ensure_db():
@@ -336,6 +364,7 @@ def ensure_db():
                 ]
             )
             db.session.commit()
+
 
 # ---------------- RUN ---------------- #
 if __name__ == "__main__":
