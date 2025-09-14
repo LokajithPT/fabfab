@@ -51,6 +51,39 @@ def admin_login_required(f):
     return wrapper
 
 # ---------------- MODELS ---------------- #
+class Worker(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), unique=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "email": self.email,
+            "createdAt": self.created_at.isoformat(),
+        }
+
+class Track(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    worker_id = db.Column(db.Integer, nullable=False)      # ID of worker who scanned
+    order_email = db.Column(db.String(120), nullable=False) # Email from order
+    order_status = db.Column(db.String(50), nullable=False) # e.g., "Picked Up", "Delivered"
+    location = db.Column(db.String(100))                  # optional location info
+    scanned_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "workerId": self.worker_id,
+            "orderEmail": self.order_email,
+            "orderStatus": self.order_status,
+            "location": self.location,
+            "scannedAt": self.scanned_at.isoformat(),
+        }
+
+
 class Service(db.Model):
     id = db.Column(db.String(20), primary_key=True, default=lambda: str(uuid.uuid4())[:8])
     name = db.Column(db.String(120), nullable=False)
@@ -117,6 +150,28 @@ class Order(db.Model):
             "total": self.total,
             "createdAt": self.created_at.isoformat(),
         }
+#worker shit 
+
+@app.route("/worker/scan", methods=["POST"])
+def worker_scan():
+    data = request.json
+    worker_id = data.get("workerId")
+    order_email = data.get("orderEmail")
+    status = data.get("orderStatus")
+    location = data.get("location")
+
+    if not all([worker_id, order_email, status]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    track = Track(
+        worker_id=worker_id,
+        order_email=order_email,
+        order_status=status,
+        location=location
+    )
+    db.session.add(track)
+    db.session.commit()
+    return jsonify({"message": "Scan recorded", "track": track.to_dict()}), 201
 
 # ---------------- CUSTOMER AUTH ---------------- #
 @app.route("/auth/signup", methods=["POST"])
