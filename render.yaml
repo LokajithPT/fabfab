@@ -1,0 +1,54 @@
+services:
+  # Backend (Flask)
+  - type: web
+    name: fabfab-server
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server.app:app
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fabfab-db
+          property: connectionString
+
+  # Customer Frontend
+  - type: web
+    name: fabfab-customer
+    env: node
+    rootDir: customer
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview -- --port 10000
+    plan: free
+    envVars:
+      - key: VITE_API_URL
+        value: https://fabfab-server.onrender.com
+
+  # Worker Frontend
+  - type: web
+    name: fabfab-worker
+    env: node
+    rootDir: worker
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview -- --port 10001
+    plan: free
+    envVars:
+      - key: VITE_API_URL
+        value: https://fabfab-server.onrender.com
+
+  # Client/Admin Frontend
+  - type: web
+    name: fabfab-client
+    env: node
+    rootDir: client
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview -- --port 10002
+    plan: free
+    envVars:
+      - key: VITE_API_URL
+        value: https://fabfab-server.onrender.com
+
+databases:
+  - name: fabfab-db
+    plan: free
+
