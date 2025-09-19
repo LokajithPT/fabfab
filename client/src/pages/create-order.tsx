@@ -29,6 +29,7 @@ export default function CreateOrder() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [selectedService, setSelectedService] = useState("");
   const [pickupDate, setPickupDate] = useState("");
+  const [customerEmail, setCustomerEmail] = useState(""); 
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
@@ -51,6 +52,7 @@ export default function CreateOrder() {
     // Payload matches the new backend
     const payload = {
       customerName,
+      customerEmail,
       customerPhone,
       serviceId: selectedService,
       pickupDate,
@@ -92,6 +94,8 @@ export default function CreateOrder() {
             <CardContent className="space-y-4">
               <Label>Name</Label>
               <Input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Full name"/>
+	      <Label>Email</Label>
+	      <Input type="email" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} placeholder="Email address"/>
               <Label>Phone</Label>
               <Input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="Phone number"/>
             </CardContent>

@@ -1,4 +1,5 @@
 import os
+import qrcode
 import uuid
 from datetime import datetime
 from functools import wraps
@@ -49,6 +50,28 @@ def admin_login_required(f):
             return jsonify({"error": "Unauthorized"}), 401
         return f(*args, **kwargs)
     return wrapper
+def generate_qr(order):
+    qr_dir = os.path.join(BASE_DIR, "qr")
+    os.makedirs(qr_dir, exist_ok=True)
+
+    # Encode all order info in the QR
+    qr_data = {
+        "orderId": order.id,
+        "customerName": order.customer_name,
+        "customerEmail": order.customer_email,
+        "customerPhone": order.customer_phone,
+        "service": order.service_name,
+        "pickupDate": order.pickup_date,
+        "specialInstructions": order.special_instructions,
+        "total": order.total,
+        "createdAt": order.created_at.isoformat(),
+    }
+
+    img = qrcode.make(qr_data)
+    qr_path = os.path.join(qr_dir, f"{order.id}.png")
+    img.save(qr_path)
+
+    return qr_path
 
 # ---------------- MODELS ---------------- #
 class Worker(db.Model):
@@ -242,6 +265,7 @@ def create_order_no_jwt():
     )
     db.session.add(order)
     db.session.commit()
+    generate_qr(order)
     return jsonify(order.to_dict()), 201
 
 @app.route("/api/orders", methods=["GET"])
