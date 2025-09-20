@@ -434,9 +434,10 @@ def serve_admin(path):
 # ---------------- INIT DB ---------------- #
 def ensure_db():
     with app.app_context():
-        if os.path.exists("fabclean.db"):
-            os.remove("fabclean.db")
+        # Just create tables if they don't exist, don't delete existing DB
         db.create_all()
+
+        # Seed initial services if none exist
         if not Service.query.first():
             db.session.add_all([
                 Service(id="s1", name="Laundry", price=200, duration="24h"),
