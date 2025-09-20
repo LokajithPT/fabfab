@@ -150,6 +150,7 @@ class Customer(db.Model):
         }
 
 class Order(db.Model):
+    __tablename = "orders"
     id = db.Column(db.String(20), primary_key=True, default=lambda: str(uuid.uuid4())[:8])
     customer_name = db.Column(db.String(100), nullable=False)
     customer_email = db.Column(db.String(120), nullable=False)  # NEW
@@ -434,10 +435,10 @@ def serve_admin(path):
 # ---------------- INIT DB ---------------- #
 def ensure_db():
     with app.app_context():
-        # Just create tables if they don't exist, don't delete existing DB
+        # create tables if not exist
         db.create_all()
 
-        # Seed initial services if none exist
+        # seed services if none exist
         if not Service.query.first():
             db.session.add_all([
                 Service(id="s1", name="Laundry", price=200, duration="24h"),
