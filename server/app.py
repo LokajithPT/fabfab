@@ -449,6 +449,6 @@ def ensure_db():
 
 # ---------------- RUN ---------------- #
 if __name__ == "__main__":
-    ensure_db()
     app.run(port=5000, debug=True)
+ensure_db()
 
