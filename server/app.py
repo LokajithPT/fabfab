@@ -14,6 +14,7 @@ from flask import (
     url_for,
     render_template,
 )
+
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import (
     JWTManager,
@@ -412,6 +413,12 @@ def create_customer():
 @admin_login_required
 def get_orders():
     return jsonify([o.to_dict() for o in Order.query.all()])
+
+# flask route to receive a ping message and respond with pong
+
+@app.route("/ping", methods=["GET"])
+def ping():
+    return jsonify({"message": "pong"}), 200
 
 # ---------------- ADMIN REACT ROUTING ---------------- #
 @app.route("/admin", defaults={"path": ""})
